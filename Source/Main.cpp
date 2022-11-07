@@ -50,7 +50,7 @@ private:
 		CreateInfo.pApplicationInfo = &AppInfo;
 
 		uint32_t GLFWExtensionCount = 0;
-		const char** GLFWExtensions;
+		const char** GLFWExtensions = nullptr;
 
 		vkEnumerateInstanceExtensionProperties ( nullptr, &GLFWExtensionCount, nullptr );
 		std::vector<VkExtensionProperties> Extensions ( GLFWExtensionCount );
@@ -103,7 +103,7 @@ private:
 
 int main ( )
 {
-	HelloTriangleApplication App;
+	HelloTriangleApplication App{};
 
 	try
 	{
