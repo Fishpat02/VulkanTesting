@@ -31,6 +31,7 @@ class HelloTriangleApplication
     InitWindow ( );
     CreateInstance ( );
     CheckValidationLayerSupport ( );
+    GetRequiredExtensions ( );
     InitVulkan ( );
     MainLoop ( );
     Cleanup ( );
@@ -78,33 +79,29 @@ class HelloTriangleApplication
       }
     else { CreateInfo.enabledLayerCount = 0; }
 
-    uint32_t     GLFWExtensionCount = 0;
-    const char** ppGLFWExtensions   = nullptr;
+    auto Extensions = GetRequiredExtensions ( );
+    CreateInfo.enabledExtensionCount =
+        static_cast< uint32_t > ( Extensions.size ( ) );
+    CreateInfo.ppEnabledExtensionNames = Extensions.data ( );
+
+    uint32_t GLFWExtensionCount = 0;
 
     vkEnumerateInstanceExtensionProperties (
         nullptr,
         &GLFWExtensionCount,
         nullptr );
-    std::vector< VkExtensionProperties > Extensions ( GLFWExtensionCount );
+    std::vector< VkExtensionProperties > GLFWExtensions ( GLFWExtensionCount );
     vkEnumerateInstanceExtensionProperties (
         nullptr,
         &GLFWExtensionCount,
-        Extensions.data ( ) );
+        GLFWExtensions.data ( ) );
 
     std::cout << "available extensions (" << GLFWExtensionCount << "):\n";
 
-    for ( const auto& Extension : Extensions )
+    for ( const auto& Extension : GLFWExtensions )
       {
         std::cout << '\t' << Extension.extensionName << '\n';
       }
-
-    ppGLFWExtensions =
-        glfwGetRequiredInstanceExtensions ( &GLFWExtensionCount );
-
-    CreateInfo.enabledExtensionCount   = GLFWExtensionCount;
-    CreateInfo.ppEnabledExtensionNames = ppGLFWExtensions;
-
-    CreateInfo.enabledLayerCount = 0;
 
     if ( vkCreateInstance ( &CreateInfo, nullptr, &Instance ) != VK_SUCCESS )
       {
@@ -139,6 +136,26 @@ class HelloTriangleApplication
       }
 
     return true;
+  }
+
+  std::vector< const char* > GetRequiredExtensions ( )
+  {
+    uint32_t     GLFWExtensionCount = 0;
+    const char** ppGLFWExtensions;
+
+    ppGLFWExtensions =
+        glfwGetRequiredInstanceExtensions ( &GLFWExtensionCount );
+
+    std::vector< const char* > Extentions (
+        ppGLFWExtensions,
+        ppGLFWExtensions + GLFWExtensionCount );
+
+    if ( EnableValidationLayers )
+      {
+        Extentions.push_back ( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
+      }
+
+    return Extentions;
   }
 
   void InitVulkan ( ) {}
