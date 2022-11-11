@@ -13,7 +13,11 @@ find_package(Vulkan REQUIRED)
 set(VULKAN_DIR ${Vulkan_INCLUDE_DIR})
 STRING(REGEX REPLACE "/Include" "" VULKAN_DIR ${VULKAN_DIR})
 
-set(VULKAN_LIBS "vulkan-1")
+if(WIN32)
+    set(VULKAN_LIBS "vulkan-1")
+else()
+    set(VULKAN_LIBS "vulkan")
+endif()
 
 include_directories(AFTER ${VULKAN_DIR}/Include)
 link_directories(${VULKAN_DIR}/Bin;${VULKAN_DIR}/Lib;)
