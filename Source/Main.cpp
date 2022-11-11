@@ -1,7 +1,11 @@
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -26,6 +30,7 @@ class HelloTriangleApplication
   {
     InitWindow ( );
     CreateInstance ( );
+    CheckValidationLayerSupport ( );
     InitVulkan ( );
     MainLoop ( );
     Cleanup ( );
@@ -47,6 +52,12 @@ class HelloTriangleApplication
 
   void CreateInstance ( )
   {
+    if ( EnableValidationLayers && !CheckValidationLayerSupport ( ) )
+      {
+        throw std::runtime_error (
+            "Validation layers requested, but not available!" );
+      }
+
     VkApplicationInfo AppInfo { };
     AppInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     AppInfo.pApplicationName   = "Hello Triangle";
@@ -58,6 +69,14 @@ class HelloTriangleApplication
     VkInstanceCreateInfo CreateInfo { };
     CreateInfo.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     CreateInfo.pApplicationInfo = &AppInfo;
+
+    if ( EnableValidationLayers )
+      {
+        CreateInfo.enabledLayerCount =
+            static_cast< uint32_t > ( ValidationLayers.size ( ) );
+        CreateInfo.ppEnabledLayerNames = ValidationLayers.data ( );
+      }
+    else { CreateInfo.enabledLayerCount = 0; }
 
     uint32_t     GLFWExtensionCount = 0;
     const char** ppGLFWExtensions   = nullptr;
@@ -91,6 +110,35 @@ class HelloTriangleApplication
       {
         throw std::runtime_error ( "failed to create instance!" );
       }
+  }
+
+  bool CheckValidationLayerSupport ( )
+  {
+    uint32_t LayerCount;
+    vkEnumerateInstanceLayerProperties ( &LayerCount, nullptr );
+
+    std::vector< VkLayerProperties > AvailableLayers ( LayerCount );
+    vkEnumerateInstanceLayerProperties (
+        &LayerCount,
+        AvailableLayers.data ( ) );
+
+    for ( const char* LayerName : ValidationLayers )
+      {
+        bool LayerFound = false;
+
+        for ( const auto& LayerProperties : AvailableLayers )
+          {
+            if ( strcmp ( LayerName, LayerProperties.layerName ) == 0 )
+              {
+                LayerFound = true;
+                break;
+              }
+          }
+
+        if ( !LayerFound ) { return false; }
+      }
+
+    return true;
   }
 
   void InitVulkan ( ) {}
