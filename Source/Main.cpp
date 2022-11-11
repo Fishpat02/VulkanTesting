@@ -9,6 +9,16 @@
 const uint32_t WIDTH  = 800;
 const uint32_t HEIGHT = 600;
 
+const std::vector< const char* > ValidationLayers = {
+  "VK_LAYER_KHRONOS_validation"
+};
+
+#ifndef NDBEBUG
+const bool EnableValidationLayers = false;
+#else
+const bool EnableValidationLayers = true;
+#endif
+
 class HelloTriangleApplication
 {
  public:
@@ -22,7 +32,7 @@ class HelloTriangleApplication
   }
 
  private:
-  GLFWwindow* Window;
+  GLFWwindow* pWindow;
   VkInstance  Instance;
 
   void InitWindow ( )
@@ -32,7 +42,7 @@ class HelloTriangleApplication
     glfwWindowHint ( GLFW_CLIENT_API, GLFW_NO_API );
     glfwWindowHint ( GLFW_RESIZABLE, GLFW_FALSE );
 
-    Window = glfwCreateWindow ( WIDTH, HEIGHT, "Vulkan", nullptr, nullptr );
+    pWindow = glfwCreateWindow ( WIDTH, HEIGHT, "Vulkan", nullptr, nullptr );
   }
 
   void CreateInstance ( )
@@ -50,7 +60,7 @@ class HelloTriangleApplication
     CreateInfo.pApplicationInfo = &AppInfo;
 
     uint32_t     GLFWExtensionCount = 0;
-    const char** GLFWExtensions     = nullptr;
+    const char** ppGLFWExtensions   = nullptr;
 
     vkEnumerateInstanceExtensionProperties (
         nullptr,
@@ -69,10 +79,11 @@ class HelloTriangleApplication
         std::cout << '\t' << Extension.extensionName << '\n';
       }
 
-    GLFWExtensions = glfwGetRequiredInstanceExtensions ( &GLFWExtensionCount );
+    ppGLFWExtensions =
+        glfwGetRequiredInstanceExtensions ( &GLFWExtensionCount );
 
     CreateInfo.enabledExtensionCount   = GLFWExtensionCount;
-    CreateInfo.ppEnabledExtensionNames = GLFWExtensions;
+    CreateInfo.ppEnabledExtensionNames = ppGLFWExtensions;
 
     CreateInfo.enabledLayerCount = 0;
 
@@ -86,14 +97,14 @@ class HelloTriangleApplication
 
   void MainLoop ( )
   {
-    while ( !glfwWindowShouldClose ( Window ) ) { glfwPollEvents ( ); }
+    while ( !glfwWindowShouldClose ( pWindow ) ) { glfwPollEvents ( ); }
   }
 
   void Cleanup ( )
   {
     vkDestroyInstance ( Instance, nullptr );
 
-    glfwDestroyWindow ( Window );
+    glfwDestroyWindow ( pWindow );
 
     glfwTerminate ( );
   }

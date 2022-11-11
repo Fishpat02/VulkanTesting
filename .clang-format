@@ -27,6 +27,7 @@ Cpp11BracedListStyle: 'false'
 FixNamespaceComments: 'true'
 IncludeBlocks: Regroup
 IndentCaseLabels: 'false'
+IndentPPDirectives: AfterHash
 NamespaceIndentation: All
 PointerAlignment: Middle
 ReflowComments: 'true'
