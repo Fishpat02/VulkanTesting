@@ -7,6 +7,11 @@ add_subdirectory(Lib/glfw)
 
 include_directories(Lib/glfw/include)
 
+# glm
+add_subdirectory(Lib/glm)
+
+include_directories(Lib/glm/glm)
+
 # vulkan
 find_package(Vulkan REQUIRED)
 
@@ -27,4 +32,5 @@ add_subdirectory(Source)
 
 # Link the libs
 target_link_libraries(${PROJECT_NAME} glfw)
+target_link_libraries(${PROJECT_NAME} glm)
 target_link_libraries(${PROJECT_NAME} ${VULKAN_LIBS})
