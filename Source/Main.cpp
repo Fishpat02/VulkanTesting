@@ -1,6 +1,3 @@
-#include <vulkan/vulkan_core.h>
-
-#include <cstdint>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -111,7 +108,7 @@ class HelloTriangleApplication
 
   bool CheckValidationLayerSupport ( )
   {
-    uint32_t LayerCount;
+    uint32_t LayerCount = 0;
     vkEnumerateInstanceLayerProperties ( &LayerCount, nullptr );
 
     std::vector< VkLayerProperties > AvailableLayers ( LayerCount );
@@ -141,7 +138,7 @@ class HelloTriangleApplication
   std::vector< const char* > GetRequiredExtensions ( )
   {
     uint32_t     GLFWExtensionCount = 0;
-    const char** ppGLFWExtensions;
+    const char** ppGLFWExtensions = nullptr;
 
     ppGLFWExtensions =
         glfwGetRequiredInstanceExtensions ( &GLFWExtensionCount );
