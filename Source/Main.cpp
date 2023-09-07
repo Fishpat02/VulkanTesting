@@ -26,7 +26,6 @@ class HelloTriangleApplication
   void Run ( )
   {
     InitWindow ( );
-    CreateInstance ( );
     CheckValidationLayerSupport ( );
     GetRequiredExtensions ( );
     InitVulkan ( );
@@ -37,6 +36,7 @@ class HelloTriangleApplication
  private:
   GLFWwindow* pWindow;
   VkInstance  Instance;
+  VkDebugUtilsMessengerEXT DebugMessenger;
 
   void InitWindow ( )
   {
@@ -138,7 +138,7 @@ class HelloTriangleApplication
   std::vector< const char* > GetRequiredExtensions ( )
   {
     uint32_t     GLFWExtensionCount = 0;
-    const char** ppGLFWExtensions = nullptr;
+    const char** ppGLFWExtensions   = nullptr;
 
     ppGLFWExtensions =
         glfwGetRequiredInstanceExtensions ( &GLFWExtensionCount );
@@ -155,7 +155,16 @@ class HelloTriangleApplication
     return Extentions;
   }
 
-  void InitVulkan ( ) {}
+  void InitVulkan ( ) 
+  { 
+      CreateInstance ( ); 
+      SetupDebugMessenger ( );
+  }
+
+  void SetupDebugMessenger()
+  {
+    if ( !EnableValidationLayers ) return;
+  }
 
   void MainLoop ( )
   {
@@ -169,6 +178,17 @@ class HelloTriangleApplication
     glfwDestroyWindow ( pWindow );
 
     glfwTerminate ( );
+  }
+
+  static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback (
+      VkDebugUtilsMessageSeverityFlagBitsEXT      MessageSeverity,
+      VkDebugUtilsMessageTypeFlagsEXT             MessageType,
+      const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+      void*                                       pUserData )
+  {
+    std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+
+    return VK_FALSE;
   }
 };
 
