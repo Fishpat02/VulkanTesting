@@ -14,11 +14,37 @@ const std::vector< const char* > ValidationLayers = {
   "VK_LAYER_KHRONOS_validation"
 };
 
-#ifndef NDBEBUG
+#ifndef _DEBUG
 const bool EnableValidationLayers = false;
 #else
 const bool EnableValidationLayers = true;
 #endif
+
+VkResult CreateDebugUtilsMessengerEXT (
+    VkInstance                                Instance,
+    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+    const VkAllocationCallbacks*              pAllocator,
+    VkDebugUtilsMessengerEXT*                 pDebugMessenger )
+{
+  auto Func = ( PFN_vkCreateDebugUtilsMessengerEXT ) vkGetInstanceProcAddr (
+      Instance,
+      "vkCreateDebugUtilsMessengerEXT" );
+  if ( Func != nullptr )
+    return Func ( Instance, pCreateInfo, pAllocator, pDebugMessenger );
+  else
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+void DestroyDebugUtilsMessengerEXT (
+    VkInstance                   Instance,
+    VkDebugUtilsMessengerEXT     DebugMessenger,
+    const VkAllocationCallbacks* pAllocator )
+{
+  auto Func = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr (
+      Instance,
+      "vkDestroyDebugUtilsMessengerEXT" );
+  if ( Func != nullptr ) Func ( Instance, DebugMessenger, pAllocator );
+}
 
 class HelloTriangleApplication
 {
@@ -34,8 +60,8 @@ class HelloTriangleApplication
   }
 
  private:
-  GLFWwindow* pWindow;
-  VkInstance  Instance;
+  GLFWwindow*              pWindow;
+  VkInstance               Instance;
   VkDebugUtilsMessengerEXT DebugMessenger;
 
   void InitWindow ( )
@@ -68,13 +94,24 @@ class HelloTriangleApplication
     CreateInfo.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     CreateInfo.pApplicationInfo = &AppInfo;
 
+    VkDebugUtilsMessengerCreateInfoEXT DebugCreateInfo { };
+
     if ( EnableValidationLayers )
       {
         CreateInfo.enabledLayerCount =
             static_cast< uint32_t > ( ValidationLayers.size ( ) );
         CreateInfo.ppEnabledLayerNames = ValidationLayers.data ( );
+
+        PopulateDebugMessengerCreateInfo ( DebugCreateInfo );
+        CreateInfo.pNext =
+            ( VkDebugUtilsMessengerCreateInfoEXT* ) &DebugCreateInfo;
       }
-    else { CreateInfo.enabledLayerCount = 0; }
+    else
+      {
+        CreateInfo.enabledLayerCount = 0;
+
+        CreateInfo.pNext = nullptr;
+      }
 
     auto Extensions = GetRequiredExtensions ( );
     CreateInfo.enabledExtensionCount =
@@ -155,15 +192,43 @@ class HelloTriangleApplication
     return Extentions;
   }
 
-  void InitVulkan ( ) 
-  { 
-      CreateInstance ( ); 
-      SetupDebugMessenger ( );
+  void InitVulkan ( )
+  {
+    CreateInstance ( );
+    SetupDebugMessenger ( );
   }
 
-  void SetupDebugMessenger()
+  void PopulateDebugMessengerCreateInfo (
+      VkDebugUtilsMessengerCreateInfoEXT& CreateInfo )
+  {
+    CreateInfo       = { };
+    CreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    CreateInfo.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    CreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    CreateInfo.pfnUserCallback = DebugCallback;
+    CreateInfo.pUserData       = nullptr;
+  }
+
+  void SetupDebugMessenger ( )
   {
     if ( !EnableValidationLayers ) return;
+
+    VkDebugUtilsMessengerCreateInfoEXT CreateInfo;
+    PopulateDebugMessengerCreateInfo ( CreateInfo );
+
+    if ( CreateDebugUtilsMessengerEXT (
+             Instance,
+             &CreateInfo,
+             nullptr,
+             &DebugMessenger ) != VK_SUCCESS )
+      {
+        throw std::runtime_error ( "failed to set up debug messenger!" );
+      }
   }
 
   void MainLoop ( )
@@ -173,6 +238,9 @@ class HelloTriangleApplication
 
   void Cleanup ( )
   {
+    if ( EnableValidationLayers )
+      DestroyDebugUtilsMessengerEXT ( Instance, DebugMessenger, nullptr );
+
     vkDestroyInstance ( Instance, nullptr );
 
     glfwDestroyWindow ( pWindow );
